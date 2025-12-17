@@ -1,0 +1,17 @@
+**/bin/
+**/obj/
+**/.vs/
+**/.idea/
+**/.vscode/
+**/.git/
+**/.gitignore
+
+# Imported reference repo (kept for reference, excluded from image context)
+docker-aspnetcore-postgresql-docker-aspnetcore-postgresql-A2920F7D/
+
+# Local artifacts
+*.user
+*.suo
+*.pfx
+*.p12
+

@@ -1,0 +1,97 @@
+version: '3.4'
+
+networks:
+  testbench-dev:
+    driver: bridge 
+
+services:
+  testbenchwebservice:
+    image: testbenchwebservice:latest
+    depends_on:
+      - "postgres_image"
+      - "mysql_image"
+      - "sqlserver_image"
+      - "oracle_image"
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8080"
+      - "444:443"
+    volumes:
+      - ~/.aspnet/https:/https:ro
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
+      ASPNETCORE_URLS: "http://0.0.0.0:8080"
+      ASPNETCORE_Kestrel__Certificates__Default__Password: "password"
+      ASPNETCORE_Kestrel__Certificates__Default__Path: "/https/aspnetapp.pfx"
+      ConnectionStrings__PostgreSQL: "host=postgres_image;port=5432;database=blogdb;username=bloguser;password=bloguser"
+      ConnectionStrings__MySQL: "Server=mysql_image;Port=3306;Database=blogdb;Uid=bloguser;Pwd=bloguser;"
+      ConnectionStrings__SqlServer: "Server=sqlserver_image,1433;Database=blogdb;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=true;"
+      ConnectionStrings__Oracle: "Data Source=oracle_image:1521/XE;User Id=SYSTEM;Password=bloguser;"
+      ConnectionStrings__Snowflake: "account=your_account;user=bloguser;password=bloguser;db=blogdb;schema=public;warehouse=compute_wh;role=public;"
+    networks:
+      - testbench-dev  
+  
+  postgres_image:
+    image: postgres:latest
+    ports:
+      - "5433:5432"
+    restart: always
+    volumes:
+      - postgres_volume:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: "bloguser"
+      POSTGRES_PASSWORD: "bloguser"
+      POSTGRES_DB: "blogdb"
+    networks:
+      - testbench-dev
+
+  mysql_image:
+    image: mysql:8.0
+    ports:
+      - "3307:3306"
+    restart: always
+    volumes:
+      - mysql_volume:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: "rootpassword"
+      MYSQL_DATABASE: "blogdb"
+      MYSQL_USER: "bloguser"
+      MYSQL_PASSWORD: "bloguser"
+    networks:
+      - testbench-dev
+
+  sqlserver_image:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    ports:
+      - "1434:1433"
+    restart: always
+    volumes:
+      - sqlserver_volume:/var/opt/mssql
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: "YourStrong@Passw0rd"
+      MSSQL_DB: "blogdb"
+    networks:
+      - testbench-dev
+
+  oracle_image:
+    image: container-registry.oracle.com/database/express:21.3.0-xe
+    ports:
+      - "1522:1521"
+    restart: always
+    volumes:
+      - oracle_volume:/opt/oracle/oradata
+    environment:
+      ORACLE_PWD: "bloguser"
+      ORACLE_CHARACTERSET: "AL32UTF8"
+    networks:
+      - testbench-dev
+
+volumes:
+  postgres_volume:
+  mysql_volume:
+  sqlserver_volume:
+  oracle_volume:
+     

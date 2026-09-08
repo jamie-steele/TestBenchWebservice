@@ -18,39 +18,7 @@ jobs:
       SAST_EXCLUDED_PATHS: "spec, test, tests, node_modules, .git, dist, build, bin, obj, packages, vendor, .nuget, .terraform"
       SAST_REPORT_PATH: "./gl-sast-report.json"
       SAST_EXCLUDED_ANALYZERS: "semgrep"
-      SAST_ANALYZER_IMAGE: ${{ vars.SAST_ANALYZER_IMAGE }}
-      AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      DEPLOY_IMAGE_TAG: "${{ github.sha }}"
-      GITLAB_ENVIRONMENT_NAME: "production"
-      GITLAB_DEPLOYMENT_TIER: "production"
-      AWS_REGION: ${{ vars.AWS_REGION }}
-      ECR_REPOSITORY_URL: ${{ vars.ECR_REPOSITORY_URL }}
-      ECS_CLUSTER_ID: ${{ vars.ECS_CLUSTER_ID }}
-      ECS_SERVICE_NAME: ${{ vars.ECS_SERVICE_NAME }}
-      CODEDEPLOY_APPLICATION_NAME: ${{ vars.CODEDEPLOY_APPLICATION_NAME }}
-      CODEDEPLOY_DEPLOYMENT_GROUP_NAME: ${{ vars.CODEDEPLOY_DEPLOYMENT_GROUP_NAME }}
-      CONTAINER_NAME: ${{ vars.CONTAINER_NAME }}
-      CONTAINER_PORT: ${{ vars.CONTAINER_PORT }}
-      APP_URL: ${{ vars.APP_URL }}
-      CLOUDFRONT_URL: ${{ vars.CLOUDFRONT_URL }}
-      TEAM_REGISTRY_HOST: ${{ vars.TEAM_REGISTRY_HOST }}
-      TEAM_REGISTRY_USERNAME: ${{ vars.TEAM_REGISTRY_USERNAME }}
-      MIGRATION_COMMAND: ${{ vars.MIGRATION_COMMAND }}
-      SEED_COMMAND: ""
-      INSTALL_COMMAND: ${{ vars.INSTALL_COMMAND }}
-      BUILD_COMMAND: ${{ vars.BUILD_COMMAND }}
-      CI_COMMIT_SHA: "${{ github.sha }}"
-      CI_COMMIT_SHORT_SHA: "${{ github.sha }}"
-      CI_COMMIT_REF_NAME: "${{ github.ref_name }}"
-      CI_COMMIT_REF_SLUG: "${{ github.ref_name }}"
-      CI_COMMIT_BRANCH: "${{ github.ref_name }}"
-      CI_PIPELINE_ID: "${{ github.run_id }}"
-      CI_PIPELINE_SOURCE: "${{ github.event_name }}"
-      CI_JOB_NAME: "${{ github.job }}"
-      CI_JOB_URL: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-      CI_PROJECT_PATH: "${{ github.repository }}"
+      SAST_ANALYZER_IMAGE: "registry.gitlab.com/security-products/semgrep:6"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -68,39 +36,7 @@ jobs:
       SAST_EXCLUDED_PATHS: "spec, test, tests, node_modules, .git, dist, build, bin, obj, packages, vendor, .nuget, .terraform"
       SAST_REPORT_PATH: "./gl-sast-report.json"
       SAST_EXCLUDED_ANALYZERS: "semgrep"
-      SAST_ANALYZER_IMAGE: ${{ vars.SAST_ANALYZER_IMAGE }}
-      AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      DEPLOY_IMAGE_TAG: "${{ github.sha }}"
-      GITLAB_ENVIRONMENT_NAME: "production"
-      GITLAB_DEPLOYMENT_TIER: "production"
-      AWS_REGION: ${{ vars.AWS_REGION }}
-      ECR_REPOSITORY_URL: ${{ vars.ECR_REPOSITORY_URL }}
-      ECS_CLUSTER_ID: ${{ vars.ECS_CLUSTER_ID }}
-      ECS_SERVICE_NAME: ${{ vars.ECS_SERVICE_NAME }}
-      CODEDEPLOY_APPLICATION_NAME: ${{ vars.CODEDEPLOY_APPLICATION_NAME }}
-      CODEDEPLOY_DEPLOYMENT_GROUP_NAME: ${{ vars.CODEDEPLOY_DEPLOYMENT_GROUP_NAME }}
-      CONTAINER_NAME: ${{ vars.CONTAINER_NAME }}
-      CONTAINER_PORT: ${{ vars.CONTAINER_PORT }}
-      APP_URL: ${{ vars.APP_URL }}
-      CLOUDFRONT_URL: ${{ vars.CLOUDFRONT_URL }}
-      TEAM_REGISTRY_HOST: ${{ vars.TEAM_REGISTRY_HOST }}
-      TEAM_REGISTRY_USERNAME: ${{ vars.TEAM_REGISTRY_USERNAME }}
-      MIGRATION_COMMAND: ${{ vars.MIGRATION_COMMAND }}
-      SEED_COMMAND: ""
-      INSTALL_COMMAND: ${{ vars.INSTALL_COMMAND }}
-      BUILD_COMMAND: ${{ vars.BUILD_COMMAND }}
-      CI_COMMIT_SHA: "${{ github.sha }}"
-      CI_COMMIT_SHORT_SHA: "${{ github.sha }}"
-      CI_COMMIT_REF_NAME: "${{ github.ref_name }}"
-      CI_COMMIT_REF_SLUG: "${{ github.ref_name }}"
-      CI_COMMIT_BRANCH: "${{ github.ref_name }}"
-      CI_PIPELINE_ID: "${{ github.run_id }}"
-      CI_PIPELINE_SOURCE: "${{ github.event_name }}"
-      CI_JOB_NAME: "${{ github.job }}"
-      CI_JOB_URL: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-      CI_PROJECT_PATH: "${{ github.repository }}"
+      SAST_ANALYZER_IMAGE: "registry.gitlab.com/security-products/semgrep:6"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -108,26 +44,26 @@ jobs:
         run: apk add --no-cache curl jq bash grep
       - name: Script 1
         run: |
-          echo '=== Preflight Validation ===' 
+          echo '=== Preflight Validation ==='
           FAILED=0
           echo ''
           echo '--- Build Dependency Introspection ---'
-          
+
           # Check for .NET projects requiring authentication
           NUGET_CONFIG="./NuGet.config"
           if [ -f "$NUGET_CONFIG" ] || find "." -maxdepth 1 -name '*.csproj' | grep -q .; then
             echo 'Found .NET project - checking for private package feeds...'
             PRIVATE_NUGET_FEED=0
             USES_NUGET_ORG=1
-          
+
             if [ -f "$NUGET_CONFIG" ] && grep -qEi 'pkgs\.dev\.azure\.com|nuget\.pkg\.github\.com|myget|artifactory|packageSources' "$NUGET_CONFIG" 2>/dev/null; then
               PRIVATE_NUGET_FEED=1
             fi
-          
+
             if find "." -maxdepth 1 -name '*.csproj' -exec grep -qEi 'nuget\.pkg\.github\.com|pkgs\.dev\.azure\.com|myget|artifactory' {} + 2>/dev/null; then
               PRIVATE_NUGET_FEED=1
             fi
-          
+
             if [ "$PRIVATE_NUGET_FEED" -eq 1 ]; then
               echo '  [INFO] Private NuGet feed detected'
               if [ -z "${NUGET_AUTH_TOKEN:-}" ] && [ -z "${GITHUB_TOKEN:-}" ] && [ -z "${VSS_NUGET_EXTERNAL_FEED_ENDPOINTS:-}" ]; then
@@ -136,13 +72,13 @@ jobs:
                 echo '  [OK] NuGet credentials appear configured'
               fi
             fi
-          
+
             if [ -f "$NUGET_CONFIG" ] \
               && grep -qi '<clear\s*/>' "$NUGET_CONFIG" 2>/dev/null \
               && ! grep -qi 'nuget\.org' "$NUGET_CONFIG" 2>/dev/null; then
               USES_NUGET_ORG=0
             fi
-          
+
             if [ "$USES_NUGET_ORG" -eq 1 ]; then
               echo '  Checking nuget.org reachability...'
               if curl -fsSL --connect-timeout 10 --max-time 20 https://api.nuget.org/v3/index.json >/dev/null 2>&1; then
@@ -157,12 +93,12 @@ jobs:
           else
             echo 'No .csproj or NuGet.config found in .'
           fi
-          
+
           # Check Dockerfile for credential usage patterns
           DOCKERFILE="Dockerfile"
           if [ -f "$DOCKERFILE" ]; then
             echo 'Checking Dockerfile for credential patterns...'
-          
+
             # Check for nova login command
             if grep -qE 'nova\s+login|composer\s+config.*nova\.laravel\.com' "$DOCKERFILE" 2>/dev/null; then
               echo '  [INFO] Nova authentication command found in Dockerfile'
@@ -173,7 +109,7 @@ jobs:
                 fi
               fi
             fi
-          
+
             # Check for --mount=type=secret patterns (BuildKit secrets)
             # These require the secret to be passed via --secret flag in docker build, not --build-arg
             # IMPORTANT: Variables used in secret mounts MUST be marked as 'protected' in Biztraak
@@ -206,7 +142,7 @@ jobs:
               echo '  [NOTE] Variables used with --mount=type=secret MUST be marked as protected in Biztraak.'
               echo '         If not protected, they are passed as --build-arg (not --secret) and the build will fail.'
             fi
-          
+
             # Check for ARG/ENV usage of common secrets
             for SECRET in COMPOSER_AUTH NOVA_USERNAME NOVA_LICENSE_KEY NPM_TOKEN GITHUB_TOKEN; do
               if grep -qE "(ARG|ENV)\s+$SECRET" "$DOCKERFILE" 2>/dev/null; then
@@ -233,7 +169,7 @@ jobs:
       - pipeline_not_applicable
       - preflight_validation
     container:
-      image: ${{ vars.SAST_ANALYZER_IMAGE }}
+      image: $SAST_ANALYZER_IMAGE
     env:
       ALLOWED_BRANCH: "/^(dev)$/"
       SAST_STAGE: "test"
@@ -241,39 +177,7 @@ jobs:
       SAST_EXCLUDED_PATHS: "spec, test, tests, node_modules, .git, dist, build, bin, obj, packages, vendor, .nuget, .terraform"
       SAST_REPORT_PATH: "./gl-sast-report.json"
       SAST_EXCLUDED_ANALYZERS: "semgrep"
-      SAST_ANALYZER_IMAGE: ${{ vars.SAST_ANALYZER_IMAGE }}
-      AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      DEPLOY_IMAGE_TAG: "${{ github.sha }}"
-      GITLAB_ENVIRONMENT_NAME: "production"
-      GITLAB_DEPLOYMENT_TIER: "production"
-      AWS_REGION: ${{ vars.AWS_REGION }}
-      ECR_REPOSITORY_URL: ${{ vars.ECR_REPOSITORY_URL }}
-      ECS_CLUSTER_ID: ${{ vars.ECS_CLUSTER_ID }}
-      ECS_SERVICE_NAME: ${{ vars.ECS_SERVICE_NAME }}
-      CODEDEPLOY_APPLICATION_NAME: ${{ vars.CODEDEPLOY_APPLICATION_NAME }}
-      CODEDEPLOY_DEPLOYMENT_GROUP_NAME: ${{ vars.CODEDEPLOY_DEPLOYMENT_GROUP_NAME }}
-      CONTAINER_NAME: ${{ vars.CONTAINER_NAME }}
-      CONTAINER_PORT: ${{ vars.CONTAINER_PORT }}
-      APP_URL: ${{ vars.APP_URL }}
-      CLOUDFRONT_URL: ${{ vars.CLOUDFRONT_URL }}
-      TEAM_REGISTRY_HOST: ${{ vars.TEAM_REGISTRY_HOST }}
-      TEAM_REGISTRY_USERNAME: ${{ vars.TEAM_REGISTRY_USERNAME }}
-      MIGRATION_COMMAND: ${{ vars.MIGRATION_COMMAND }}
-      SEED_COMMAND: ""
-      INSTALL_COMMAND: ${{ vars.INSTALL_COMMAND }}
-      BUILD_COMMAND: ${{ vars.BUILD_COMMAND }}
-      CI_COMMIT_SHA: "${{ github.sha }}"
-      CI_COMMIT_SHORT_SHA: "${{ github.sha }}"
-      CI_COMMIT_REF_NAME: "${{ github.ref_name }}"
-      CI_COMMIT_REF_SLUG: "${{ github.ref_name }}"
-      CI_COMMIT_BRANCH: "${{ github.ref_name }}"
-      CI_PIPELINE_ID: "${{ github.run_id }}"
-      CI_PIPELINE_SOURCE: "${{ github.event_name }}"
-      CI_JOB_NAME: "${{ github.job }}"
-      CI_JOB_URL: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-      CI_PROJECT_PATH: "${{ github.repository }}"
+      SAST_ANALYZER_IMAGE: "registry.gitlab.com/security-products/semgrep:6"
       SECURE_LOG_LEVEL: "debug"
       SEARCH_MAX_DEPTH: 20
       SEMGREP_EXTENSIONS: ".js,.ts,.jsx,.tsx,.py,.java,.cs,.go,.rb,.php,.yaml,.yml,.json"
@@ -308,39 +212,8 @@ jobs:
       SAST_EXCLUDED_PATHS: "spec, test, tests, node_modules, .git, dist, build, bin, obj, packages, vendor, .nuget, .terraform"
       SAST_REPORT_PATH: "./gl-sast-report.json"
       SAST_EXCLUDED_ANALYZERS: "semgrep"
-      SAST_ANALYZER_IMAGE: ${{ vars.SAST_ANALYZER_IMAGE }}
-      AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      DEPLOY_IMAGE_TAG: "${{ github.sha }}"
-      GITLAB_ENVIRONMENT_NAME: "production"
-      GITLAB_DEPLOYMENT_TIER: "production"
-      AWS_REGION: ${{ vars.AWS_REGION }}
-      ECR_REPOSITORY_URL: ${{ vars.ECR_REPOSITORY_URL }}
-      ECS_CLUSTER_ID: ${{ vars.ECS_CLUSTER_ID }}
-      ECS_SERVICE_NAME: ${{ vars.ECS_SERVICE_NAME }}
-      CODEDEPLOY_APPLICATION_NAME: ${{ vars.CODEDEPLOY_APPLICATION_NAME }}
-      CODEDEPLOY_DEPLOYMENT_GROUP_NAME: ${{ vars.CODEDEPLOY_DEPLOYMENT_GROUP_NAME }}
-      CONTAINER_NAME: ${{ vars.CONTAINER_NAME }}
-      CONTAINER_PORT: ${{ vars.CONTAINER_PORT }}
-      APP_URL: ${{ vars.APP_URL }}
-      CLOUDFRONT_URL: ${{ vars.CLOUDFRONT_URL }}
-      TEAM_REGISTRY_HOST: ${{ vars.TEAM_REGISTRY_HOST }}
-      TEAM_REGISTRY_USERNAME: ${{ vars.TEAM_REGISTRY_USERNAME }}
-      MIGRATION_COMMAND: ${{ vars.MIGRATION_COMMAND }}
-      SEED_COMMAND: ""
-      INSTALL_COMMAND: ${{ vars.INSTALL_COMMAND }}
-      BUILD_COMMAND: ${{ vars.BUILD_COMMAND }}
-      CI_COMMIT_SHA: "${{ github.sha }}"
-      CI_COMMIT_SHORT_SHA: "${{ github.sha }}"
-      CI_COMMIT_REF_NAME: "${{ github.ref_name }}"
-      CI_COMMIT_REF_SLUG: "${{ github.ref_name }}"
-      CI_COMMIT_BRANCH: "${{ github.ref_name }}"
-      CI_PIPELINE_ID: "${{ github.run_id }}"
-      CI_PIPELINE_SOURCE: "${{ github.event_name }}"
-      CI_JOB_NAME: "${{ github.job }}"
-      CI_JOB_URL: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-      CI_PROJECT_PATH: "${{ github.repository }}"
+      SAST_ANALYZER_IMAGE: "registry.gitlab.com/security-products/semgrep:6"
+      BIZTRAAK_PIPELINE_SECRET: ${{ secrets.BIZTRAAK_PIPELINE_SECRET }}
       BIZTRAAK_API_URL: ${{ vars.BIZTRAAK_API_URL }}
       BIZTRAAK_API_PATH: ${{ vars.BIZTRAAK_API_PATH }}
       BIZTRAAK_ENVIRONMENT: ${{ vars.BIZTRAAK_ENVIRONMENT }}
@@ -350,7 +223,6 @@ jobs:
       BIZTRAAK_PROJECT_ID: ${{ vars.BIZTRAAK_PROJECT_ID }}
       BIZTRAAK_PROJECT_COMPONENT_ID: ${{ vars.BIZTRAAK_PROJECT_COMPONENT_ID }}
       BIZTRAAK_COMPONENT_DEFINITION_ID: ${{ vars.BIZTRAAK_COMPONENT_DEFINITION_ID }}
-      BIZTRAAK_PIPELINE_SECRET: ${{ secrets.BIZTRAAK_PIPELINE_SECRET }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -381,12 +253,12 @@ jobs:
           LOW=$(jq -r '[.vulnerabilities[]? | select(.severity == "low")] | length' "$SAST_REPORT_PATH" 2>/dev/null || echo "0")
           INFO=$(jq -r '[.vulnerabilities[]? | select(.severity == "info")] | length' "$SAST_REPORT_PATH" 2>/dev/null || echo "0")
           UNKNOWN=$(jq -r '[.vulnerabilities[]? | select(.severity == "unknown" or .severity == null)] | length' "$SAST_REPORT_PATH" 2>/dev/null || echo "0")
-          
+
           SECRET_B64="${BIZTRAAK_PIPELINE_SECRET}"
           SECRET_HEX=$(echo -n "$SECRET_B64" | base64 -d | od -A n -t x1 | tr -d ' \n\t')
           TIMESTAMP=$(date -u +%s)
           NONCE=$(openssl rand -hex 16)
-          
+
           PAYLOAD=$(jq -c -S -n \
             --arg teamId "$BIZTRAAK_TEAM_ID" \
             --arg projectId "$BIZTRAAK_PROJECT_ID" \
@@ -434,31 +306,30 @@ jobs:
                 unknown: $unknown
               }
             }')
-          
-          SIGNATURE=$(printf '%s.%s.%s' "$TIMESTAMP" "$NONCE" "$PAYLOAD" | openssl dgst -sha256 -mac HMAC -macopt "hexkey:$SECRET_HEX" | sed 's/^.* //' | tr -d '
-          ')
-          
+
+          SIGNATURE=$(printf '%s.%s.%s' "$TIMESTAMP" "$NONCE" "$PAYLOAD" | openssl dgst -sha256 -mac HMAC -macopt "hexkey:$SECRET_HEX" | sed 's/^.* //' | tr -d '\n')
+
           BASE_URL=$(echo "$BIZTRAAK_API_URL" | sed 's|/$||')
           API_PATH="${BIZTRAAK_API_PATH:-/api/security-scan/results}"
           API_PATH=$(echo "$API_PATH" | sed 's|^/|/|')
           API_URL="${BASE_URL}${API_PATH}"
-          
+
           RESPONSE=$(curl -v -s -w "\n%{http_code}" -X POST "$API_URL" \
             -H "Content-Type: application/json" \
             -H "X-Biztraak-Timestamp: $TIMESTAMP" \
             -H "X-Biztraak-Nonce: $NONCE" \
             -H "X-Biztraak-Signature: $SIGNATURE" \
             -d "$PAYLOAD" 2>&1)
-          
+
           HTTP_CODE=$(echo "$RESPONSE" | grep -E '^[0-9]{3}$' | tail -n1)
           BODY=$(echo "$RESPONSE" | grep -v -E '^[0-9]{3}$' | grep -v -E '^[<>*]' | tail -n +2)
-          
+
           if [ -z "$HTTP_CODE" ]; then
             echo "ERROR: Failed to parse HTTP response"
             echo "Full response: $RESPONSE"
             exit 1
           fi
-          
+
           if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
             echo "Security scan results published successfully (HTTP $HTTP_CODE)"
           else
@@ -482,39 +353,7 @@ jobs:
       SAST_EXCLUDED_PATHS: "spec, test, tests, node_modules, .git, dist, build, bin, obj, packages, vendor, .nuget, .terraform"
       SAST_REPORT_PATH: "./gl-sast-report.json"
       SAST_EXCLUDED_ANALYZERS: "semgrep"
-      SAST_ANALYZER_IMAGE: ${{ vars.SAST_ANALYZER_IMAGE }}
-      AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      DEPLOY_IMAGE_TAG: "${{ github.sha }}"
-      GITLAB_ENVIRONMENT_NAME: "production"
-      GITLAB_DEPLOYMENT_TIER: "production"
-      AWS_REGION: ${{ vars.AWS_REGION }}
-      ECR_REPOSITORY_URL: ${{ vars.ECR_REPOSITORY_URL }}
-      ECS_CLUSTER_ID: ${{ vars.ECS_CLUSTER_ID }}
-      ECS_SERVICE_NAME: ${{ vars.ECS_SERVICE_NAME }}
-      CODEDEPLOY_APPLICATION_NAME: ${{ vars.CODEDEPLOY_APPLICATION_NAME }}
-      CODEDEPLOY_DEPLOYMENT_GROUP_NAME: ${{ vars.CODEDEPLOY_DEPLOYMENT_GROUP_NAME }}
-      CONTAINER_NAME: ${{ vars.CONTAINER_NAME }}
-      CONTAINER_PORT: ${{ vars.CONTAINER_PORT }}
-      APP_URL: ${{ vars.APP_URL }}
-      CLOUDFRONT_URL: ${{ vars.CLOUDFRONT_URL }}
-      TEAM_REGISTRY_HOST: ${{ vars.TEAM_REGISTRY_HOST }}
-      TEAM_REGISTRY_USERNAME: ${{ vars.TEAM_REGISTRY_USERNAME }}
-      MIGRATION_COMMAND: ${{ vars.MIGRATION_COMMAND }}
-      SEED_COMMAND: ""
-      INSTALL_COMMAND: ${{ vars.INSTALL_COMMAND }}
-      BUILD_COMMAND: ${{ vars.BUILD_COMMAND }}
-      CI_COMMIT_SHA: "${{ github.sha }}"
-      CI_COMMIT_SHORT_SHA: "${{ github.sha }}"
-      CI_COMMIT_REF_NAME: "${{ github.ref_name }}"
-      CI_COMMIT_REF_SLUG: "${{ github.ref_name }}"
-      CI_COMMIT_BRANCH: "${{ github.ref_name }}"
-      CI_PIPELINE_ID: "${{ github.run_id }}"
-      CI_PIPELINE_SOURCE: "${{ github.event_name }}"
-      CI_JOB_NAME: "${{ github.job }}"
-      CI_JOB_URL: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-      CI_PROJECT_PATH: "${{ github.repository }}"
+      SAST_ANALYZER_IMAGE: "registry.gitlab.com/security-products/semgrep:6"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -534,39 +373,7 @@ jobs:
       SAST_EXCLUDED_PATHS: "spec, test, tests, node_modules, .git, dist, build, bin, obj, packages, vendor, .nuget, .terraform"
       SAST_REPORT_PATH: "./gl-sast-report.json"
       SAST_EXCLUDED_ANALYZERS: "semgrep"
-      SAST_ANALYZER_IMAGE: ${{ vars.SAST_ANALYZER_IMAGE }}
-      AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      DEPLOY_IMAGE_TAG: "${{ github.sha }}"
-      GITLAB_ENVIRONMENT_NAME: "production"
-      GITLAB_DEPLOYMENT_TIER: "production"
-      AWS_REGION: ${{ vars.AWS_REGION }}
-      ECR_REPOSITORY_URL: ${{ vars.ECR_REPOSITORY_URL }}
-      ECS_CLUSTER_ID: ${{ vars.ECS_CLUSTER_ID }}
-      ECS_SERVICE_NAME: ${{ vars.ECS_SERVICE_NAME }}
-      CODEDEPLOY_APPLICATION_NAME: ${{ vars.CODEDEPLOY_APPLICATION_NAME }}
-      CODEDEPLOY_DEPLOYMENT_GROUP_NAME: ${{ vars.CODEDEPLOY_DEPLOYMENT_GROUP_NAME }}
-      CONTAINER_NAME: ${{ vars.CONTAINER_NAME }}
-      CONTAINER_PORT: ${{ vars.CONTAINER_PORT }}
-      APP_URL: ${{ vars.APP_URL }}
-      CLOUDFRONT_URL: ${{ vars.CLOUDFRONT_URL }}
-      TEAM_REGISTRY_HOST: ${{ vars.TEAM_REGISTRY_HOST }}
-      TEAM_REGISTRY_USERNAME: ${{ vars.TEAM_REGISTRY_USERNAME }}
-      MIGRATION_COMMAND: ${{ vars.MIGRATION_COMMAND }}
-      SEED_COMMAND: ""
-      INSTALL_COMMAND: ${{ vars.INSTALL_COMMAND }}
-      BUILD_COMMAND: ${{ vars.BUILD_COMMAND }}
-      CI_COMMIT_SHA: "${{ github.sha }}"
-      CI_COMMIT_SHORT_SHA: "${{ github.sha }}"
-      CI_COMMIT_REF_NAME: "${{ github.ref_name }}"
-      CI_COMMIT_REF_SLUG: "${{ github.ref_name }}"
-      CI_COMMIT_BRANCH: "${{ github.ref_name }}"
-      CI_PIPELINE_ID: "${{ github.run_id }}"
-      CI_PIPELINE_SOURCE: "${{ github.event_name }}"
-      CI_JOB_NAME: "${{ github.job }}"
-      CI_JOB_URL: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-      CI_PROJECT_PATH: "${{ github.repository }}"
+      SAST_ANALYZER_IMAGE: "registry.gitlab.com/security-products/semgrep:6"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
